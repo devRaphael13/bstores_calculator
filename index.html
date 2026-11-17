@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ffffff">
+<title>Bstores Calculator</title>
+<style>
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  /* ============ THEME TOKENS ============ */
+  :root {
+    --bg: #ffffff;
+    --surface: #fdf4fb;
+    --text: #2d1b4d;
+    --text-muted: #7a5a94;
+    --accent: #ff69b4;
+    --accent-hover: #d63384;
+    --accent-soft: #ffe6f5;
+    --border: #f0c6e3;
+    --bear-color: #d9a8c0;
+    --bear-dark: #c07fa0;
+    --bear-cheek: #f4a9c9;
+    --shadow: 0 10px 30px rgba(200, 100, 170, 0.12);
+  }
+
+  body.dark-mode {
+    --bg: #0a162b;
+    --surface: #132543;
+    --text: #eef3fb;
+    --text-muted: #a9becf;
+    --accent: #ff8fd1;
+    --accent-hover: #ffb6e3;
+    --accent-soft: #1c1f3a;
+    --border: #2d4a73;
+    --bear-color: #e8c4d6;
+    --bear-dark: #c49aae;
+    --bear-cheek: #f4a9c9;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+
+  /* ============ BASE ============ */
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+    padding-bottom: 4rem;
+    transition: background 0.4s ease, color 0.4s ease;
+  }
+
+  /* ============ HEADER ============ */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  body.dark-mode header { background: rgba(10, 22, 43, 0.8); }
+
+  .brand {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  #themeToggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.25rem;
+    display: grid;
+    place-items: center;
+    transition: transform 0.2s, background 0.2s;
+  }
+  #themeToggle:hover { transform: rotate(15deg) scale(1.05); background: var(--accent-soft); }
+
+  /* ============ LAYOUT ============ */
+  .container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 1rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 5;
+  }
+  @media (min-width: 768px) {
+    .container { grid-template-columns: 1fr 1fr; gap: 2rem; padding: 2rem 1rem; }
+  }
+
+  /* ============ PANELS ============ */
+  .panel {
+    background: rgba(253, 244, 251, 0.85);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    backdrop-filter: blur(6px);
+  }
+  body.dark-mode .panel {
+    background: rgba(19, 37, 67, 0.85);
+  }
+  h2 {
+    margin: 0 0 0.5rem;
+    font-size: 1.35rem;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* ============ BUSINESS RULES ============ */
+  .rules-list {
+    margin: 0;
+    padding-left: 1.2rem;
+    color: var(--text-muted);
+  }
+  .rules-list li { margin-bottom: 0.75rem; }
+  .rules-list strong { color: var(--text); }
+  .note {
+    margin-top: auto;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ============ CALCULATOR FORM ============ */
+  .field { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+  label { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+  label span { font-weight: 400; font-size: 0.8rem; color: var(--text-muted); }
+  input[type="number"], input[type="text"].money-input, input[type="range"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 1rem;
+  }
+  input[type="number"]:focus, input[type="text"].money-input:focus, input[type="range"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input[type="range"] { accent-color: var(--accent); cursor: pointer; height: 6px; }
+
+  .margin-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+  .margin-val {
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+
+  button[type="submit"] {
+    margin-top: 0.5rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255, 105, 180, 0.35);
+    transition: background 0.2s, transform 0.1s;
+    align-self: flex-start;
+  }
+  button[type="submit"]:hover { background: var(--accent-hover); }
+  button[type="submit"]:active { transform: translateY(1px); }
+  button[type="submit"]:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* ============ RESULTS ============ */
+  #results {
+    display: none;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  @media (min-width: 768px) { #results { grid-template-columns: 1fr 1fr; } }
+  #results.show { animation: fadeUp 0.5s ease forwards; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .result {
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .result.min {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+  }
+  .result.suggest {
+    border-left: 4px solid var(--accent-hover);
+  }
+  .label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    font-weight: 700;
+  }
+  .value { font-size: 1.5rem; font-weight: 800; color: var(--text); }
+  .sub { font-size: 0.8rem; color: var(--text-muted); }
+
+  /* ============ BACKGROUND TEDDY BEARS ============ */
+  .bears {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .bear {
+    position: absolute;
+    opacity: 0.5;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.12));
+    transition: transform 0.3s ease;
+  }
+  body.dark-mode .bear { filter: drop-shadow(0 6px 12px rgba(255, 255, 255, 0.08)); }
+
+  /* Symbol part colours (driven by theme variables) */
+  .t-body, .t-head, .t-ear, .t-leg, .t-arm { fill: var(--bear-color); }
+  .t-ear-inner { fill: var(--bear-cheek); opacity: 0.75; }
+  .t-snout { fill: var(--bear-dark); opacity: 0.5; }
+  .t-eye, .t-nose { fill: #3d2b2b; }
+  .t-mouth { fill: none; stroke: #3d2b2b; stroke-width: 2.5; stroke-linecap: round; }
+
+  @media (max-width: 767px) {
+    header { padding: 0.85rem 1rem; }
+    .panel { padding: 1.25rem; border-radius: 20px; }
+  }
+</style>
+</head>
+<body class="light-mode">
+
+  <!-- Teddy bear illustration (drawn with SVG, no external images) -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
+    <symbol id="teddy" viewBox="0 0 120 120">
+      <ellipse class="t-leg" cx="38" cy="106" rx="9" ry="12"/>
+      <ellipse class="t-leg" cx="82" cy="106" rx="9" ry="12"/>
+      <ellipse class="t-body" cx="60" cy="80" rx="34" ry="28"/>
+      <ellipse class="t-arm" cx="28" cy="80" rx="9" ry="15" transform="rotate(-22 28 80)"/>
+      <ellipse class="t-arm" cx="92" cy="80" rx="9" ry="15" transform="rotate(22 92 80)"/>
+      <circle class="t-head" cx="60" cy="45" r="26"/>
+      <circle class="t-ear" cx="40" cy="23" r="13"/>
+      <circle class="t-ear" cx="80" cy="23" r="13"/>
+      <circle class="t-ear-inner" cx="40" cy="23" r="7"/>
+      <circle class="t-ear-inner" cx="80" cy="23" r="7"/>
+      <ellipse class="t-snout" cx="60" cy="55" rx="10" ry="7"/>
+      <circle class="t-eye" cx="50" cy="41" r="3"/>
+      <circle class="t-eye" cx="70" cy="41" r="3"/>
+      <circle class="t-nose" cx="60" cy="52" r="4"/>
+      <path class="t-mouth" d="M54 56 Q60 61 66 56"/>
+    </symbol>
+  </svg>
+
+  <header>
+    <div class="brand">🧸 Bstores Calculator</div>
+    <button id="themeToggle" aria-label="Toggle light/dark mode">🌙</button>
+  </header>
+
+  <div class="container">
+    <!-- 1st half on mobile (top): Business Rules -->
+    <section class="panel rules-panel">
+      <h2>📋 Business Rules</h2>
+      <ul class="rules-list">
+        <li><strong>Total cost first.</strong> Every sale must cover: Cost Price + Waybill + Transport.</li>
+        <li><strong>Minimum selling price.</strong> Your break-even point — sell at or above this to avoid a loss.</li>
+        <li><strong>Suggested price.</strong> Adds your chosen profit margin on top of break-even cost.</li>
+        <li><strong>Confirm waybill rates.</strong> Logistics prices change — check with your rider/dispatch before quoting.</li>
+        <li><strong>Round for simplicity.</strong> Consider rounding up to the nearest ₦50 for easier cash handling.</li>
+        <li><strong>No clearance below minimum.</strong> Only go below minimum price during a clearance or promo sale.</li>
+      </ul>
+      <p class="note">Edit these rules in the HTML file to match your store's policy.</p>
+    </section>
+
+    <!-- 2nd half on mobile (bottom): Calculator -->
+    <section class="panel calc-panel">
+      <h2>💰 Price Calculator</h2>
+      <form id="calcForm" novalidate>
+        <div class="field">
+          <label>Cost Price <span>(₦)</span></label>
+          <input type="text" inputmode="decimal" name="costPrice" placeholder="0" required min="0" step="0.01" class="money-input">
+        </div>
+
+        <div class="field">
+          <label>Waybill Price <span>(₦)</span></label>
+          <input type="text" inputmode="decimal" name="waybill" placeholder="0" required min="0" step="0.01" class="money-input">
+        </div>
+
+        <div class="field">
+          <label>Transport <span>(₦)</span></label>
+          <input type="text" inputmode="decimal" name="transport" placeholder="0" required min="0" step="0.01" class="money-input">
+        </div>
+
+        <div class="field">
+          <label>Profit Margin <span>(%)</span></label>
+          <input type="range" name="margin" min="0" max="100" value="30">
+          <div class="margin-row">
+            <span class="margin-val">30%</span>
+          </div>
+        </div>
+
+        <button type="submit">Calculate Price 🧸</button>
+      </form>
+
+      <div id="results">
+        <div class="result min">
+          <span class="label">Minimum Selling Price</span>
+          <span class="value" id="minPrice">₦0.00</span>
+          <p class="sub">Break-even: recover all costs</p>
+        </div>
+        <div class="result suggest">
+          <span class="label">Suggested Selling Price</span>
+          <span class="value" id="suggestedPrice">₦0.00</span>
+          <p class="sub">Includes your profit margin</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Cute teddy bears scattered in the background (extra big) -->
+  <div class="bears">
+    <svg class="bear" style="top:4%; left:2%; width:150px; opacity:0.5;"><use href="#teddy"></use></svg>
+    <svg class="bear" style="top:6%; right:6%; width:110px; opacity:0.35;"><use href="#teddy"></use></svg>
+    <svg class="bear" style="top:25%; left:0%; width:100px; opacity:0.3;"><use href="#teddy"></use></svg>
+    <svg class="bear" style="top:35%; right:0%; width:140px; opacity:0.45;"><use href="#teddy"></use></svg>
+    <svg class="bear" style="bottom:35%; left:8%; width:120px; opacity:0.4;"><use href="#teddy"></use></svg>
+    <svg class="bear" style="bottom:25%; right:10%; width:100px; opacity:0.3;"><use href="#teddy"></use></svg>
+    <svg class="bear" style="bottom:8%; left:2%; width:160px; opacity:0.5;"><use href="#teddy"></use></svg>
+    <!-- Bear pointing toward the business rules panel -->
+    <svg class="bear" style="top:18%; left:-10%; width:200px; opacity:0.5; transform:rotate(-18deg); z-index:3;"><use href="#teddy"></use></svg>
+    <!-- Big bear lying down covering almost entire width at bottom -->
+    <svg class="bear" style="bottom:3%; left:50%; transform:translateX(-50%) rotate(90deg); width:1100px; opacity:0.15; z-index:1;"><use href="#teddy"></use></svg>
+    <svg class="bear" style="top:50%; left:40%; width:80px; opacity:0.25;"><use href="#teddy"></use></svg>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const body = document.body;
+      const toggle = document.getElementById('themeToggle');
+
+      /* ---- Theme persistence ---- */
+      const saved = localStorage.getItem('bstores-theme');
+      if (saved === 'dark') {
+        body.className = 'dark-mode';
+        toggle.textContent = '☀️';
+      } else {
+        body.className = 'light-mode';
+        toggle.textContent = '🌙';
+      }
+
+      toggle.addEventListener('click', () => {
+        const isDark = body.classList.toggle('dark-mode');
+        body.className = isDark ? 'dark-mode' : 'light-mode';
+        localStorage.setItem('bstores-theme', isDark ? 'dark' : 'light');
+        toggle.textContent = isDark ? '☀️' : '🌙';
+      });
+
+      /* ---- Calculator ---- */
+      const form = document.getElementById('calcForm');
+      const marginInput = form.elements.margin;
+      const marginVal = document.querySelector('.margin-val');
+
+      marginInput.addEventListener('input', () => {
+        marginVal.textContent = marginInput.value + '%';
+      });
+
+      /* ---- Auto-format input numbers with commas as you type ---- */
+      function formatInputWithCommas(input) {
+        let val = input.value.replace(/[^0-9.]/g, '');
+        const parts = val.split('.');
+        if (parts.length > 2) {
+          val = parts[0] + '.' + parts.slice(1).join('');
+        }
+        const [intPart, decPart] = val.split('.');
+        const formattedInt = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        input.value = decPart !== undefined ? formattedInt + '.' + decPart : formattedInt;
+      }
+
+      document.querySelectorAll('.money-input').forEach(input => {
+        input.addEventListener('input', () => formatInputWithCommas(input));
+      });
+
+      function formatMoney(n) {
+        return '₦' + n.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+
+        const cost = parseFloat((form.elements.costPrice.value || '').replace(/,/g, '')) || 0;
+        const waybill = parseFloat((form.elements.waybill.value || '').replace(/,/g, '')) || 0;
+        const transport = parseFloat((form.elements.transport.value || '').replace(/,/g, '')) || 0;
+        const margin = parseFloat(marginInput.value) || 0;
+
+        const totalCost = cost + waybill + transport;
+        const minPrice = totalCost;                      // break-even
+        const suggestedPrice = totalCost * (1 + margin / 100);
+
+        document.getElementById('minPrice').textContent = formatMoney(minPrice);
+        document.getElementById('suggestedPrice').textContent = formatMoney(suggestedPrice);
+
+        const results = document.getElementById('results');
+        results.style.display = 'grid';
+        results.classList.remove('show');
+        void results.offsetHeight; // force reflow to restart animation
+        results.classList.add('show');
+        results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
+  </script>
+</body>
+</html>
